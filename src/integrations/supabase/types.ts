@@ -5729,6 +5729,10 @@ export type Database = {
       }
       get_public_result: { Args: { _serial: string }; Returns: Json }
       get_public_scan: { Args: { _serial: string }; Returns: Json }
+      get_staff_id_for_user: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: string
+      }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
@@ -5738,6 +5742,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["platform_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_org_dentist: {
+        Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
