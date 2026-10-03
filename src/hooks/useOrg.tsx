@@ -16,6 +16,9 @@ interface OrgContextType {
   mainOrgId: string | null;
   setCurrentOrgBySlug: (slug: string) => void;
   basePath: string;
+  realRole: string | null;
+  viewAsRole: string | null;
+  setViewAsRole: (role: string | null) => void;
 }
 
 const OrgContext = createContext<OrgContextType>({
@@ -24,6 +27,9 @@ const OrgContext = createContext<OrgContextType>({
   basePath: "",
   isBranch: false,
   mainOrgId: null,
+  realRole: null,
+  viewAsRole: null,
+  setViewAsRole: () => {},
 });
 
 export function OrgProvider({ children }: { children: ReactNode }) {
@@ -32,6 +38,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [currentOrg, setCurrentOrg] = useState<OrgContextType["currentOrg"]>(null);
 
+  const [viewAsRole, setViewAsRoleState] = useState<string | null>(() => {
+    try { return sessionStorage.getItem("clinexus:view_as_role"); } catch { return null; }
+  });
+  const setViewAsRole = (r: string | null) => {
+    setViewAsRoleState(r);
+    try { r ? sessionStorage.setItem("clinexus:view_as_role", r) : sessionStorage.removeItem("clinexus:view_as_role"); } catch { /* ignore */ }
+  };
   const isSuperAdmin = roles.includes("super_admin");
   const devPreview = typeof window !== "undefined" && window.localStorage.getItem("__devpreview") === "1";
 
@@ -113,13 +126,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
   }, [currentOrg?.org_slug]);
 
+  const realRole = currentOrg?.role ?? null;
+  const canViewAs = realRole === "owner" || realRole === "admin";
+  const effectiveOrg = currentOrg && canViewAs && viewAsRole ? { ...currentOrg, role: viewAsRole } : currentOrg;
+
   const isBranch = !!currentOrg?.parent_org_id;
   const mainOrgId = currentOrg ? (currentOrg.parent_org_id || currentOrg.org_id) : null;
   const basePath = currentOrg ? `/clinic/${currentOrg.org_slug}` : "";
 
 
   return (
-    <OrgContext.Provider value={{ currentOrg, setCurrentOrgBySlug, basePath, isBranch, mainOrgId }}>
+    <OrgContext.Provider value={{ currentOrg: effectiveOrg, setCurrentOrgBySlug, basePath, isBranch, mainOrgId, realRole, viewAsRole: canViewAs ? viewAsRole : null, setViewAsRole }}>
       {children}
     </OrgContext.Provider>
   );
