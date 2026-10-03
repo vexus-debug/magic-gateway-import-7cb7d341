@@ -101,14 +101,16 @@ export default function AppointmentsPage() {
   const myStaffId = dentistList.find((d: any) => d.user_id && d.user_id === user?.id)?.id as string | undefined;
   const [scope, setScope] = useState<"mine" | "all" | null>(null);
   // Dentists land on their own schedule; everyone else sees all chairs.
-  const effectiveScope = scope ?? (myStaffId ? "mine" : "all");
-  const onlyMine = effectiveScope === "mine" && !!myStaffId;
-  const appointments = onlyMine ? allAppointments.filter((a) => a.staff_id === myStaffId) : allAppointments;
+  const { currentOrg } = useOrg();
+  const isDentistRole = currentOrg?.role === "dentist";
+  const effectiveScope = isDentistRole ? "mine" : scope ?? (myStaffId ? "mine" : "all");
+  const onlyMine = effectiveScope === "mine" && (!!myStaffId || isDentistRole);
+  const appointments = onlyMine ? allAppointments.filter((a) => !!myStaffId && a.staff_id === myStaffId) : allAppointments;
   const { data: waitingList = [] } = useWaitingList();
   const addToQueue = useCheckInAppointment();
   const queuedAppointmentIds = new Set(waitingList.map((w) => w.appointment_id).filter(Boolean) as string[]);
   const { data: allMonthAppointments = [] } = useMonthAppointments(currentDate);
-  const monthAppointments = onlyMine ? allMonthAppointments.filter((a: any) => a.staff_id === myStaffId) : allMonthAppointments;
+  const monthAppointments = onlyMine ? allMonthAppointments.filter((a: any) => !!myStaffId && a.staff_id === myStaffId) : allMonthAppointments;
 
   const displayAppointments = appointments.map((a) => ({
     ...a,
@@ -196,12 +198,13 @@ export default function AppointmentsPage() {
           },
         }}
       >
-        {myStaffId && (
+        {myStaffId && !isDentistRole && (
           <div className="inline-flex rounded-md border border-border/50 p-0.5" role="group" aria-label="Whose appointments">
             <Button size="sm" variant={onlyMine ? "secondary" : "ghost"} className="h-7 px-2 text-xs" onClick={() => setScope("mine")}>My appointments</Button>
             <Button size="sm" variant={!onlyMine ? "secondary" : "ghost"} className="h-7 px-2 text-xs" onClick={() => setScope("all")}>All chairs</Button>
           </div>
         )}
+        {!isDentistRole && (<>
         <Button size="sm" variant="outline" onClick={() => setWalkInOpen(true)} className="border-border/50">
           <UserPlus className="mr-2 h-4 w-4" />
           Walk-In
@@ -210,6 +213,7 @@ export default function AppointmentsPage() {
           <CalendarPlus className="mr-2 h-4 w-4" />
           Book Appointment
         </Button>
+        </>)}
       </PageHeader>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -297,7 +301,7 @@ export default function AppointmentsPage() {
                                         </div>
                                         <p className="opacity-75 truncate">{apt.treatment}</p>
                                         <p className="opacity-60 text-[10px] mt-0.5">{apt.dentist}</p>
-                                        {apt.status === "scheduled" && isSameDay(currentDate, new Date()) && (
+                                        {!isDentistRole && apt.status === "scheduled" && isSameDay(currentDate, new Date()) && (
                                           queuedAppointmentIds.has(apt.id) ? (
                                             <p className="mt-1.5 text-[10px] font-semibold text-emerald-700">✓ Checked in</p>
                                           ) : (
@@ -432,7 +436,7 @@ export default function AppointmentsPage() {
                             <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                               {queuedAppointmentIds.has(apt.id) ? (
                                 <span className="text-[11px] text-emerald-600 font-medium">Checked in</span>
-                              ) : (
+                              ) : isDentistRole ? null : (
                                 <Button
                                   size="sm"
                                   variant="outline"
