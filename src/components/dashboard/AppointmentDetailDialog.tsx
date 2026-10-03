@@ -15,6 +15,7 @@ import { suggestConsentTemplate } from "@/data/consentTemplates";
 import { useClinicLinks } from "@/hooks/usePatientContext";
 import { useNavigate } from "react-router-dom";
 import { UserCheck, Stethoscope } from "lucide-react";
+import { useOrg } from "@/hooks/useOrg";
 
 const statusOptions = ["scheduled", "in-progress", "completed", "cancelled"];
 const chairs = ["Chair 1", "Chair 2", "Chair 3"];
@@ -27,6 +28,8 @@ interface AppointmentDetailDialogProps {
 }
 
 export function AppointmentDetailDialog({ appointment, open, onOpenChange, checkedIn }: AppointmentDetailDialogProps) {
+  const { currentOrg } = useOrg();
+  const isDentistRole = currentOrg?.role === "dentist";
   const checkIn = useCheckInAppointment();
   const startVisit = useStartVisit();
   const link = useClinicLinks();
@@ -194,7 +197,7 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, check
                   <Button variant="outline" size="sm" onClick={() => handleQuickStatus("cancelled")} className="text-red-600 hover:text-red-700">
                     Cancel Appointment
                   </Button>
-                  {checkedIn || justCheckedIn ? (
+                  {isDentistRole ? null : checkedIn || justCheckedIn ? (
                     <span className="inline-flex items-center text-xs font-medium text-emerald-600 px-2"><UserCheck className="h-3.5 w-3.5 mr-1" />In waiting list</span>
                   ) : (
                     <Button variant="outline" size="sm" onClick={handleCheckIn} disabled={checkIn.isPending}>
@@ -221,7 +224,7 @@ export function AppointmentDetailDialog({ appointment, open, onOpenChange, check
                   Mark Complete
                 </Button>
               )}
-              <Button onClick={startEdit} className="bg-secondary hover:bg-secondary/90" size="sm">Edit</Button>
+              {!isDentistRole && <Button onClick={startEdit} className="bg-secondary hover:bg-secondary/90" size="sm">Edit</Button>}
             </>
           )}
         </DialogFooter>

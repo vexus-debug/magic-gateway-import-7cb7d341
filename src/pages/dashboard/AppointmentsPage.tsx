@@ -436,7 +436,7 @@ export default function AppointmentsPage() {
                             <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                               {queuedAppointmentIds.has(apt.id) ? (
                                 <span className="text-[11px] text-emerald-600 font-medium">Checked in</span>
-                              ) : (
+                              ) : isDentistRole ? null : (
                                 <Button
                                   size="sm"
                                   variant="outline"
