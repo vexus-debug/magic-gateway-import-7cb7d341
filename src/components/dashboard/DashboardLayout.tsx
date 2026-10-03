@@ -7,6 +7,7 @@ import { AICopilotPanel } from "./AICopilotPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { MobileTabBar } from "./MobileTabBar";
+import { ViewAsBanner } from "./ViewAsBanner";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className={`dashboard-theme ${appearance === "dark" ? "dark" : ""} flex h-dvh w-full overflow-hidden dashboard-bg`}>
         <DashboardSidebar />
         <div className="flex flex-1 flex-col h-full overflow-hidden">
+          <ViewAsBanner />
           <DashboardHeader
             onToggleAI={() => setAiOpen(!aiOpen)}
             aiOpen={aiOpen}
